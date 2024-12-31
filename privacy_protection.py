@@ -10,6 +10,9 @@ import argparse
 import hashlib
 import glob
 import ipaddress
+import spacy # pylint: disable=import-error
+
+nlp = spacy.load('en_core_web_sm') # Load English NLP model
 
 def random_string(size=700):
     ''' Return a random string, default size is 700 '''
@@ -115,6 +118,15 @@ def replace_payment_card_numbers(text):
             text = re.compile(re.escape(match.group())).sub(replacement, text)
     return text
 
+def replace_names_with_ids_ner(text):
+    ''' Find and replace human names with unique IDs using NER '''
+    doc = nlp(text)
+    for ent in doc.ents:
+        if ent.label_ == "PERSON":  # Only replace names tagged as PERSON
+            replacement = f'name-{hash10(ent.text, size=12)}'
+            text = text.replace(ent.text, replacement)
+    return text
+
 def protect_privacy(filepath):
     ''' Replace private information '''
     text = read_file(filepath)  # Read the file
@@ -122,6 +134,7 @@ def protect_privacy(filepath):
     text = replace_ipv4_addresses(text)
     text = replace_payment_card_numbers(text)
     text = replace_ipv6_addresses(text)
+    text = replace_names_with_ids_ner(text)
     write_file(filepath + '.protected', text)  # Write the modified content back to the file
 
 def main():
