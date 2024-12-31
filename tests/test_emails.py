@@ -10,6 +10,6 @@ def test_email_addresses(mock_write, mock_read):
     mock_read.return_value = "user@example.com or admin@uk.eu or 21789@gmail.com"
     protect_privacy("dummy.txt")
     expected_output = (
-        "6a9841@example.com or 67d73c@uk.eu or dd0169@gmail.com"
+        "email-6a9841@example.com or email-67d73c@uk.eu or email-dd0169@gmail.com"
     )
     mock_write.assert_called_once_with("dummy.txt.protected", expected_output)

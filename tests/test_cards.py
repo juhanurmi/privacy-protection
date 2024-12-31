@@ -10,6 +10,6 @@ def test_credit_card(mock_write, mock_read):
     mock_read.return_value = "My card numbers are 4111 1111 1111 1111 and 5500-0000-0000-0004. Invalid: 4111 1111 1111 1112."
     protect_privacy("dummy.txt")
     expected_output = (
-        "My card numbers are 3aeedea8fef2 and 3b49ffea0e53. Invalid: 4111 1111 1111 1112."
+        "My card numbers are card-3aeedea8fef2 and card-3b49ffea0e53. Invalid: 4111 1111 1111 1112."
     )
     mock_write.assert_called_once_with("dummy.txt.protected", expected_output)

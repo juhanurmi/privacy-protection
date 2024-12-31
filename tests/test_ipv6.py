@@ -15,10 +15,10 @@ def test_ipv6(mock_write, mock_read):
         2266:25::12::ad12'''
     protect_privacy("dummy.txt")
     expected_output = (
-        '''c6d19508c6af
+        '''IPv6-c6d19508c6af
         2266:0025::0012:0000:ad12
-        10c8cf4f89ec
-        864ff4f6d642
+        IPv6-10c8cf4f89ec
+        IPv6-864ff4f6d642
         2266:25::12:0:ad12
         2266:25::12::ad12'''
     )

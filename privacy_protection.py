@@ -48,7 +48,7 @@ def replace_email_addresses(text):
     email_pattern = re.compile(r'[a-zA-Z0-9._-]{2,25}@[a-zA-Z0-9.-]{2,25}\.[a-zA-Z]{2,10}')
     for match in re.finditer(email_pattern, text):
         email = match.group()
-        replacement = hash10(email.split('@')[0], size=6) + '@' + email.split('@')[-1]
+        replacement = 'email-' + hash10(email.split('@')[0], size=6) + '@' + email.split('@')[-1]
         text = re.compile(email).sub(replacement, text)
     return text
 
@@ -60,7 +60,7 @@ def replace_ipv4_addresses(text):
         try:
             ip_obj = ipaddress.ip_address(ip)
             if not ip_obj.is_private:  # Only replace non-private IPs
-                replacement = hash10(ip, size=8)
+                replacement = 'IPv4-' + hash10(ip, size=8)
                 text = re.compile(ip).sub(replacement, text)
         except ValueError:
             continue  # Skip invalid IPs
@@ -85,7 +85,7 @@ def replace_ipv6_addresses(text):
         try:
             ip_obj = ipaddress.ip_address(ip)
             if ip_obj.version == 6 and not ip_obj.is_private:  # Only replace non-private IPv6
-                replacement = hash10(ip, size=12)  # Generate a replacement hash
+                replacement = 'IPv6-' + hash10(ip, size=12)  # Generate a replacement hash
                 text = re.compile(re.escape(ip)).sub(replacement, text)
         except ValueError:
             continue  # Skip invalid IPv6 addresses
@@ -111,7 +111,7 @@ def replace_payment_card_numbers(text):
     for match in re.finditer(card_pattern, text):
         card_number = match.group().replace(' ', '').replace('-', '')  # Normalize card number
         if luhn_checksum(card_number):  # Validate with Luhn
-            replacement = hash10(card_number, size=12)  # Replace with hashed value
+            replacement = 'card-' + hash10(card_number, size=12)  # Replace with hashed value
             text = re.compile(re.escape(match.group())).sub(replacement, text)
     return text
 
