@@ -8,8 +8,9 @@ IPv4 addresses, payment card numbers, email addresses, etc.
 ## Install
 
 ```
-pip install pytest==8.3.4
-pytest tests/
+python3.6 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ## Tests
@@ -22,5 +23,5 @@ pytest tests/
 ## Usage
 
 ```
-python privacy_protection.py examples/*.json
+python privacy_protection.py examples/*.json examples/example.txt
 ```
