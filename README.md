@@ -14,8 +14,6 @@ This is an example text file with Personally Identifiable Information (PII), suc
 Email address
 IP address
 Credit card information
-Date of birth
-Financial information
 Full name
 Passport information
 Social Security number (SSN)
@@ -24,9 +22,10 @@ Emails: user@example.com or admin@uk.eu or 21789@gmail.com
 IPv4: 216.58.211.238 and 74.6.231.20. Private 10.0.0.0/8 and 127.0.0.1.
 IPv6: 2345:0425:2CA1:0000:0000:0567:5673:23b5 ==> 2345:0425:2CA1:0:0:0567:5673:23b5
 My card numbers are 4111 1111 1111 1111 and 5500-0000-0000-0004.
-Names: Juha Nurmi, David, and Constantinos.
+Names: Juha Nurmi, Constantinos Patsakis, David Arroyo, ...
 
 Copyright (c) 2024 Juha Nurmi
+Finland
 ```
 
 Output:
@@ -43,13 +42,14 @@ Full name
 Passport information
 Social Security number (SSN)
 
-Emails: email-0a4505@example.com or email-5cbd64@uk.eu or email-f31ccf@gmail.com
-IPv4: IPv4-9e4b30f3 and IPv4-8657c497. Private 10.0.0.0/8 and 127.0.0.1.
-IPv6: IPv6-b17d0a3ba114 ==> IPv6-cba19534cad4
-My card numbers are card-09f3aad1fd66 and card-88b823ab71f9.
-Names: name-163b4411e57e, name-c349d640d510, and name-29f5d0b936c3.
+Emails: email-89cbec@example.com or email-e31dec@uk.eu or email-a535f5@gmail.com
+IPv4: IPv4-deed46b2 and IPv4-99a61afd. Private 10.0.0.0/8 and 127.0.0.1.
+IPv6: IPv6-37ad83cb6438 ==> IPv6-7ca162e4ca59
+My card numbers are card-c59007e80cc9 and card-5a9de5f7fb51.
+Names: name-275b08d538e2, name-2fe5cd841519, name-3f56e67eb0cc, ...
 
-Copyright (c) 2024 name-163b4411e57e
+Copyright (c) 2024 name-275b08d538e2
+location-cd9fa5a19c93
 ```
 
 ## Install

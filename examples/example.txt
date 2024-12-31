@@ -13,6 +13,7 @@ Emails: user@example.com or admin@uk.eu or 21789@gmail.com
 IPv4: 216.58.211.238 and 74.6.231.20. Private 10.0.0.0/8 and 127.0.0.1.
 IPv6: 2345:0425:2CA1:0000:0000:0567:5673:23b5 ==> 2345:0425:2CA1:0:0:0567:5673:23b5
 My card numbers are 4111 1111 1111 1111 and 5500-0000-0000-0004.
-Names: Juha Nurmi, David, and Constantinos.
+Names: Juha Nurmi, Constantinos Patsakis, David Arroyo, ...
 
 Copyright (c) 2024 Juha Nurmi
+Finland

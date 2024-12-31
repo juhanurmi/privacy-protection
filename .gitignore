@@ -1,5 +1,5 @@
 # Examples
-examples/protected_*
+examples/*.protected
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
