@@ -118,6 +118,15 @@ def replace_payment_card_numbers(text):
             text = re.compile(re.escape(match.group())).sub(replacement, text)
     return text
 
+def replace_iban_with_ids(text):
+    ''' Replace IBANs (based on ISO 13616 standard) in text with unique IDs '''
+    iban_pattern = re.compile(r'\b[A-Z]{2}\d{2}[A-Z0-9]{4}\d{7}([A-Z0-9]?){0,16}\b')
+    for match in re.finditer(iban_pattern, text):
+        iban = match.group()
+        replacement = f'iban-{hash10(iban, size=12)}'
+        text = text.replace(iban, replacement)
+    return text
+
 def replace_names_with_ids_ner(text, doc):
     ''' Find and replace human names with unique IDs using NER '''
     for ent in doc.ents:
@@ -141,6 +150,7 @@ def protect_privacy(filepath):
     text = replace_ipv4_addresses(text)
     text = replace_payment_card_numbers(text)
     text = replace_ipv6_addresses(text)
+    text = replace_iban_with_ids(text)
     doc = nlp(text)
     text = replace_names_with_ids_ner(text, doc)
     text = replace_locations_with_ids(text, doc)

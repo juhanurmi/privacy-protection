@@ -7,9 +7,9 @@ from privacy_protection import protect_privacy
 @patch("privacy_protection.RANDOM_SALT", new="abc123")
 def test_names(mock_write, mock_read):
     """Test the protect_privacy function."""
-    mock_read.return_value = "Juha Nurmi, David Arroyo, ..."
+    mock_read.return_value = "My IBAN is DE89370400440532013000."
     protect_privacy("dummy.txt")
     expected_output = (
-        "name-3d5714dd49a9, name-f07b2f46c449, ..."
+        "My IBAN is iban-2aa25e938c90."
     )
     mock_write.assert_called_once_with("dummy.txt.protected", expected_output)
