@@ -66,6 +66,31 @@ def replace_ipv4_addresses(text):
             continue  # Skip invalid IPs
     return text
 
+def replace_ipv6_addresses(text):
+    ''' Replace valid, non-private IPv6 addresses '''
+    ipv6_pattern = re.compile(
+        r'(?<![:\w])('
+        r'(?:[a-fA-F0-9]{1,4}:){1,7}[a-fA-F0-9]{1,4}|'  # Standard format
+        r'(?:[a-fA-F0-9]{1,4}:){1,7}:|'                # Trailing double colon
+        r':[a-fA-F0-9]{1,4}|'                          # Leading double colon
+        r'(?:[a-fA-F0-9]{1,4}:){1,6}::[a-fA-F0-9]{1,4}|'  # Embedded double colon
+        r'::(?:[a-fA-F0-9]{1,4}:){1,6}[a-fA-F0-9]{1,4}|' # Double colon with trailing
+        r'::'                                           # Only double colon
+        r')(?![:\w])'
+    )
+    for match in re.finditer(ipv6_pattern, text):
+        ip = match.group()
+        if len(ip) < 10:
+            continue
+        try:
+            ip_obj = ipaddress.ip_address(ip)
+            if ip_obj.version == 6 and not ip_obj.is_private:  # Only replace non-private IPv6
+                replacement = hash10(ip, size=12)  # Generate a replacement hash
+                text = re.compile(re.escape(ip)).sub(replacement, text)
+        except ValueError:
+            continue  # Skip invalid IPv6 addresses
+    return text
+
 def replace_payment_card_numbers(text):
     ''' Replace valid payment card numbers (with Luhn checksum validation) '''
     card_pattern = re.compile(r'\b(?:\d[ -]*?){13,19}\b')  # Match potential card numbers
@@ -96,6 +121,7 @@ def protect_privacy(filepath):
     text = replace_email_addresses(text)
     text = replace_ipv4_addresses(text)
     text = replace_payment_card_numbers(text)
+    text = replace_ipv6_addresses(text)
     write_file(filepath + '.protected', text)  # Write the modified content back to the file
 
 def main():
