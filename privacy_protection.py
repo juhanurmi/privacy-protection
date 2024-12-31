@@ -118,12 +118,19 @@ def replace_payment_card_numbers(text):
             text = re.compile(re.escape(match.group())).sub(replacement, text)
     return text
 
-def replace_names_with_ids_ner(text):
+def replace_names_with_ids_ner(text, doc):
     ''' Find and replace human names with unique IDs using NER '''
-    doc = nlp(text)
     for ent in doc.ents:
         if ent.label_ == "PERSON":  # Only replace names tagged as PERSON
             replacement = f'name-{hash10(ent.text, size=12)}'
+            text = text.replace(ent.text, replacement)
+    return text
+
+def replace_locations_with_ids(text, doc):
+    ''' Find and replace locations (GPE and LOC) with unique IDs '''
+    for ent in doc.ents:
+        if ent.label_ in ["GPE", "LOC"]:  # Replace geographical locations
+            replacement = f'location-{hash10(ent.text, size=12)}'
             text = text.replace(ent.text, replacement)
     return text
 
@@ -134,7 +141,9 @@ def protect_privacy(filepath):
     text = replace_ipv4_addresses(text)
     text = replace_payment_card_numbers(text)
     text = replace_ipv6_addresses(text)
-    text = replace_names_with_ids_ner(text)
+    doc = nlp(text)
+    text = replace_names_with_ids_ner(text, doc)
+    text = replace_locations_with_ids(text, doc)
     write_file(filepath + '.protected', text)  # Write the modified content back to the file
 
 def main():
