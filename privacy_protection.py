@@ -164,6 +164,18 @@ def replace_locations_with_ids(text, doc):
             text = text.replace(ent.text, replacement)
     return text
 
+def replacements(text):
+    ''' Call replacements '''
+    text = replace_email_addresses(text)
+    text = replace_ipv4_addresses(text)
+    text = replace_payment_card_numbers(text)
+    text = replace_ipv6_addresses(text)
+    text = replace_iban_with_ids(text)
+    doc = nlp(text)  # Create a spaCy document
+    text = replace_names_with_ids_ner(text, doc)
+    text = replace_locations_with_ids(text, doc)
+    return text
+
 def process_json(data):
     ''' Recursively process JSON fields to replace PII '''
     if isinstance(data, dict):  # If the data is a dictionary, process its keys and values
@@ -172,14 +184,7 @@ def process_json(data):
     elif isinstance(data, list):  # If the data is a list, process each element
         data = [process_json(item) for item in data]
     elif isinstance(data, str):  # If the data is a string, process it for PII
-        doc = nlp(data)  # Create a spaCy document
-        data = replace_email_addresses(data)
-        data = replace_ipv4_addresses(data)
-        data = replace_payment_card_numbers(data)
-        data = replace_ipv6_addresses(data)
-        data = replace_iban_with_ids(data)
-        data = replace_names_with_ids_ner(data, doc)
-        data = replace_locations_with_ids(data, doc)
+        data = replacements(data)
     return data
 
 def protect_privacy(filepath):
@@ -194,14 +199,7 @@ def protect_privacy(filepath):
     else:
         # Handle plain text files
         text = read_file(filepath)
-        text = replace_email_addresses(text)
-        text = replace_ipv4_addresses(text)
-        text = replace_payment_card_numbers(text)
-        text = replace_ipv6_addresses(text)
-        text = replace_iban_with_ids(text)
-        doc = nlp(text)
-        text = replace_names_with_ids_ner(text, doc)
-        text = replace_locations_with_ids(text, doc)
+        text = replacements(text)
         write_file(filepath + '.protected', text)  # Write the modified content back to the file
 
 def main():
