@@ -9,8 +9,11 @@ import random
 import argparse
 import hashlib
 import glob
+import json
 import ipaddress
 import spacy # pylint: disable=import-error
+
+field_list = ['IPv4-', 'IPv6-', 'card-', 'iban-', 'name-', 'location-']
 
 nlp = spacy.load('en_core_web_sm') # Load English NLP model
 
@@ -51,7 +54,10 @@ def replace_email_addresses(text):
     email_pattern = re.compile(r'[a-zA-Z0-9._-]{2,25}@[a-zA-Z0-9.-]{2,25}\.[a-zA-Z]{2,10}')
     for match in re.finditer(email_pattern, text):
         email = match.group()
+        if any(True for field in field_list if field in email):
+            continue
         replacement = 'email-' + hash10(email.split('@')[0], size=6) + '@' + email.split('@')[-1]
+        print(f'Replace: {email} --> {replacement}')
         text = re.compile(email).sub(replacement, text)
     return text
 
@@ -59,12 +65,13 @@ def replace_ipv4_addresses(text):
     ''' Replace non-private IPv4 addresses '''
     ipv4_pattern = re.compile(r'(?:\d{1,3}\.){3}\d{1,3}')
     for match in re.finditer(ipv4_pattern, text):
-        ip = match.group()
+        ip_addr = match.group()
         try:
-            ip_obj = ipaddress.ip_address(ip)
+            ip_obj = ipaddress.ip_address(ip_addr)
             if not ip_obj.is_private:  # Only replace non-private IPs
-                replacement = 'IPv4-' + hash10(ip, size=8)
-                text = re.compile(ip).sub(replacement, text)
+                replacement = 'IPv4-' + hash10(ip_addr, size=8)
+                print(f'Replace: {ip_addr} --> {replacement}')
+                text = re.compile(ip_addr).sub(replacement, text)
         except ValueError:
             continue  # Skip invalid IPs
     return text
@@ -82,14 +89,15 @@ def replace_ipv6_addresses(text):
         r')(?![:\w])'
     )
     for match in re.finditer(ipv6_pattern, text):
-        ip = match.group()
-        if len(ip) < 10:
+        ip_addr = match.group()
+        if len(ip_addr) < 10:
             continue
         try:
-            ip_obj = ipaddress.ip_address(ip)
+            ip_obj = ipaddress.ip_address(ip_addr)
             if ip_obj.version == 6 and not ip_obj.is_private:  # Only replace non-private IPv6
-                replacement = 'IPv6-' + hash10(ip, size=12)  # Generate a replacement hash
-                text = re.compile(re.escape(ip)).sub(replacement, text)
+                replacement = 'IPv6-' + hash10(ip_addr, size=12)  # Generate a replacement hash
+                print(f'Replace: {ip_addr} --> {replacement}')
+                text = re.compile(re.escape(ip_addr)).sub(replacement, text)
         except ValueError:
             continue  # Skip invalid IPv6 addresses
     return text
@@ -100,21 +108,23 @@ def replace_payment_card_numbers(text):
 
     def luhn_checksum(card_number):
         ''' Validate the Luhn checksum of a card number '''
-        digits = [int(d) for d in card_number if d.isdigit()]
+        digits = [int(digit) for digit in card_number if digit.isdigit()]
         checksum = 0
         reverse_digits = digits[::-1]
-        for i, d in enumerate(reverse_digits):
-            if i % 2 == 1:  # Double every second digit
-                d *= 2
-                if d > 9:
-                    d -= 9
-            checksum += d
+        for index, digit in enumerate(reverse_digits):
+            if index % 2 == 1:  # Double every second digit
+                digit *= 2
+                if digit > 9:
+                    digit -= 9
+            checksum += digit
         return checksum % 10 == 0
 
     for match in re.finditer(card_pattern, text):
-        card_number = match.group().replace(' ', '').replace('-', '')  # Normalize card number
+        card_match = match.group()
+        card_number = card_match.replace(' ', '').replace('-', '')  # Normalize card number
         if luhn_checksum(card_number):  # Validate with Luhn
             replacement = 'card-' + hash10(card_number, size=12)  # Replace with hashed value
+            print(f'Replace: {card_match} --> {replacement}')
             text = re.compile(re.escape(match.group())).sub(replacement, text)
     return text
 
@@ -124,37 +134,75 @@ def replace_iban_with_ids(text):
     for match in re.finditer(iban_pattern, text):
         iban = match.group()
         replacement = f'iban-{hash10(iban, size=12)}'
+        print(f'Replace: {iban} --> {replacement}')
         text = text.replace(iban, replacement)
     return text
 
 def replace_names_with_ids_ner(text, doc):
     ''' Find and replace human names with unique IDs using NER '''
     for ent in doc.ents:
+        if any(True for field in field_list if field in ent.text):
+            continue
+        if any(True for field in ['=', '<', '>', '"', "'"] if field in ent.text):
+            continue
         if ent.label_ == "PERSON":  # Only replace names tagged as PERSON
             replacement = f'name-{hash10(ent.text, size=12)}'
+            print(f'Replace: {ent.text} --> {replacement}')
             text = text.replace(ent.text, replacement)
     return text
 
 def replace_locations_with_ids(text, doc):
     ''' Find and replace locations (GPE and LOC) with unique IDs '''
     for ent in doc.ents:
+        if any(True for field in field_list if field in ent.text):
+            continue
+        if any(True for field in ['=', '<', '>', '"', "'"] if field in ent.text):
+            continue
         if ent.label_ in ["GPE", "LOC"]:  # Replace geographical locations
             replacement = f'location-{hash10(ent.text, size=12)}'
+            print(f'Replace: {ent.text} --> {replacement}')
             text = text.replace(ent.text, replacement)
     return text
 
+def process_json(data):
+    ''' Recursively process JSON fields to replace PII '''
+    if isinstance(data, dict):  # If the data is a dictionary, process its keys and values
+        for key, value in data.items():
+            data[key] = process_json(value)
+    elif isinstance(data, list):  # If the data is a list, process each element
+        data = [process_json(item) for item in data]
+    elif isinstance(data, str):  # If the data is a string, process it for PII
+        doc = nlp(data)  # Create a spaCy document
+        data = replace_email_addresses(data)
+        data = replace_ipv4_addresses(data)
+        data = replace_payment_card_numbers(data)
+        data = replace_ipv6_addresses(data)
+        data = replace_iban_with_ids(data)
+        data = replace_names_with_ids_ner(data, doc)
+        data = replace_locations_with_ids(data, doc)
+    return data
+
 def protect_privacy(filepath):
     ''' Replace private information '''
-    text = read_file(filepath)  # Read the file
-    text = replace_email_addresses(text)
-    text = replace_ipv4_addresses(text)
-    text = replace_payment_card_numbers(text)
-    text = replace_ipv6_addresses(text)
-    text = replace_iban_with_ids(text)
-    doc = nlp(text)
-    text = replace_names_with_ids_ner(text, doc)
-    text = replace_locations_with_ids(text, doc)
-    write_file(filepath + '.protected', text)  # Write the modified content back to the file
+    if filepath.endswith('.json'):
+        # Handle JSON files
+        with open(filepath, 'r', encoding='utf-8') as myfile:
+            data = json.load(myfile)  # Load JSON data
+        processed_data = process_json(data)  # Process JSON recursively
+        with open(filepath + '.protected', 'w', encoding='utf-8') as myfile:
+            json.dump(processed_data, myfile, ensure_ascii=False, indent=4)  # Write modified JSON
+    else:
+        # Handle plain text files
+        text = read_file(filepath)
+        text = replace_email_addresses(text)
+        text = replace_ipv4_addresses(text)
+        text = replace_payment_card_numbers(text)
+        text = replace_ipv6_addresses(text)
+        text = replace_iban_with_ids(text)
+        doc = nlp(text)
+        text = replace_names_with_ids_ner(text, doc)
+        text = replace_locations_with_ids(text, doc)
+        write_file(filepath + '.protected', text)  # Write the modified content back to the file
 
 def main():
     ''' Call privacy protection over the text files passed as command-line arguments '''
