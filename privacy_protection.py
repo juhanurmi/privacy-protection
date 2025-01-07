@@ -57,7 +57,7 @@ def replace_email_addresses(text):
         if any(True for field in field_list if f'{field}-' in email):
             continue
         replacement = 'email-' + hash10(email.split('@')[0], size=6) + '@' + email.split('@')[-1]
-        print(f'Replace: {email} --> {replacement}')
+        print(f'Replace: {email} --> {replacement}', flush=True)
         text = re.compile(email).sub(replacement, text)
     return text
 
@@ -67,10 +67,15 @@ def replace_ipv4_addresses(text):
     for match in re.finditer(ipv4_pattern, text):
         ip_addr = match.group()
         try:
+            # Addresses like 8.8.8.8 or 2.2.4.0 are reserved for
+            # specific services or organizations, not individual users.
+            # IPs like 20.11.20.21 and 21.0.10.10 are owned by specific entities.
+            if len(ip_addr) <= len('8.8.80.80'):
+                continue
             ip_obj = ipaddress.ip_address(ip_addr)
             if not ip_obj.is_private:  # Only replace non-private IPs
                 replacement = 'ipv4-' + hash10(ip_addr, size=8)
-                print(f'Replace: {ip_addr} --> {replacement}')
+                print(f'Replace: {ip_addr} --> {replacement}', flush=True)
                 text = re.compile(ip_addr).sub(replacement, text)
         except ValueError:
             continue  # Skip invalid IPs
@@ -96,7 +101,7 @@ def replace_ipv6_addresses(text):
             ip_obj = ipaddress.ip_address(ip_addr)
             if ip_obj.version == 6 and not ip_obj.is_private:  # Only replace non-private IPv6
                 replacement = 'ipv6-' + hash10(ip_addr, size=12)  # Generate a replacement hash
-                print(f'Replace: {ip_addr} --> {replacement}')
+                print(f'Replace: {ip_addr} --> {replacement}', flush=True)
                 text = re.compile(re.escape(ip_addr)).sub(replacement, text)
         except ValueError:
             continue  # Skip invalid IPv6 addresses
@@ -124,7 +129,7 @@ def replace_payment_card_numbers(text):
         card_number = card_match.replace(' ', '').replace('-', '')  # Normalize card number
         if luhn_checksum(card_number):  # Validate with Luhn
             replacement = 'card-' + hash10(card_number, size=12)  # Replace with hashed value
-            print(f'Replace: {card_match} --> {replacement}')
+            print(f'Replace: {card_match} --> {replacement}', flush=True)
             text = re.compile(re.escape(match.group())).sub(replacement, text)
     return text
 
@@ -134,7 +139,7 @@ def replace_iban_with_ids(text):
     for match in re.finditer(iban_pattern, text):
         iban = match.group()
         replacement = f'iban-{hash10(iban, size=12)}'
-        print(f'Replace: {iban} --> {replacement}')
+        print(f'Replace: {iban} --> {replacement}', flush=True)
         text = text.replace(iban, replacement)
     return text
 
@@ -147,7 +152,7 @@ def replace_names_with_ids_ner(text, doc):
             continue
         if ent.label_ == "PERSON":  # Only replace names tagged as PERSON
             replacement = f'name-{hash10(ent.text, size=12)}'
-            print(f'Replace: {ent.text} --> {replacement}')
+            print(f'Replace: {ent.text} --> {replacement}', flush=True)
             text = text.replace(ent.text, replacement)
     return text
 
@@ -160,7 +165,7 @@ def replace_locations_with_ids(text, doc):
             continue
         if ent.label_ in ["GPE", "LOC"]:  # Replace geographical locations
             replacement = f'location-{hash10(ent.text, size=12)}'
-            print(f'Replace: {ent.text} --> {replacement}')
+            print(f'Replace: {ent.text} --> {replacement}', flush=True)
             text = text.replace(ent.text, replacement)
     return text
 

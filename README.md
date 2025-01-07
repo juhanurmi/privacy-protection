@@ -73,6 +73,10 @@ pytest tests/
 
 ## Usage
 
+```
+export PYTHONPATH=$(pwd)
+```
+
 The privacy protection software creates new files and replaces all PII by default (`python privacy_protection.py examples/*.json examples/example.txt`).
 
 Also, it is possible to select which PII information to replace.
