@@ -10,6 +10,6 @@ def test_ipv4(mock_write, mock_read):
     mock_read.return_value = "Private 10.0.0.0/8 and 172.16.0.0/12 and 192.168.0.0/16. 46.19.38.63."
     protect_privacy("dummy.txt")
     expected_output = (
-        "Private 10.0.0.0/8 and 172.16.0.0/12 and 192.168.0.0/16. IPv4-8e8df7ce."
+        "Private 10.0.0.0/8 and 172.16.0.0/12 and 192.168.0.0/16. ipv4-8e8df7ce."
     )
     mock_write.assert_called_once_with("dummy.txt.protected", expected_output)
